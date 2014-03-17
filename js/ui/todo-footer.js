@@ -1,5 +1,5 @@
 /* global sector */
-(function( window ) {
+(function() {
   'use strict';
 
   var Component = sector.Component,
@@ -53,4 +53,4 @@
     }
   }, View);
 
-})( window );
+})();
