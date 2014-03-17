@@ -1,0 +1,25 @@
+{
+  "name": "depot",
+  "description": "depot.js is a namespaced localStorage wrapper with a simple API.",
+  "main": "depot.js",
+  "version": "0.1.6",
+  "ignore": [
+    "CHANGELOG.md",
+    ".gitignore",
+    ".travis.yml",
+    "specs"
+  ],
+  "dependencies": {
+    "es5-shim": "git://github.com/kriskowal/es5-shim.git#2.0.0"
+  },
+  "homepage": "https://github.com/mkuklis/depot.js",
+  "_release": "0.1.6",
+  "_resolution": {
+    "type": "version",
+    "tag": "v0.1.6",
+    "commit": "2c76c0b2839d007b6dd0f0f641af5d6eec404dce"
+  },
+  "_source": "git://github.com/mkuklis/depot.js.git",
+  "_target": "~0.1.6",
+  "_originalSource": "depot"
+}
