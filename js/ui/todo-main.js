@@ -1,5 +1,5 @@
 /* global sector */
-(function( window ) {
+(function() {
   'use strict';
 
   var Component = sector.Component,
@@ -31,7 +31,7 @@
       if (msg.data.totalCount === 0) {
         this.el.style.display = 'none';
       }
-      this.ui.toggle.checked = (msg.data.completedCount === msg.data.totalCount);
+      this.ui.toggle.checked = (msg.data.totalCount !== 0 && msg.data.completedCount === msg.data.totalCount);
     },
     renderList: function (todos) {
       this.trace('rendering list items', todos);
@@ -68,4 +68,4 @@
     }
   }, View);
 
-})( window );
+})();

@@ -1,5 +1,5 @@
 /* global sector */
-(function( window ) {
+(function() {
   'use strict';
 
   var ENTER_KEY = 13;
@@ -20,4 +20,4 @@
     }
   }, View);
 
-})( window );
+})();
