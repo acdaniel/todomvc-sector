@@ -1,0 +1,9 @@
+{
+  "name": "todomvc-sector",
+  "version": "0.1.0",
+  "dependencies": {
+    "todomvc-common": "~0.1.4",
+    "sector": "~0.1.1",
+    "depot": "~0.1.6"
+  }
+}
