@@ -3,7 +3,7 @@
 	'use strict';
 
   var Router = sector.components.Router;
-	Router.attachTo(document,
+  Router.attachTo(document,
     {
       mode: 'hash',
       routes: {
