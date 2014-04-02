@@ -4,23 +4,26 @@ exports.mixins = {
   Traceable: require('./mixins/traceable'),
   Listener: require('./mixins/listener'),
   PubSub: require('./mixins/pubsub'),
-  View: require('./mixins/view')
+  View: require('./mixins/view'),
+  Bound: require('./mixins/bound'),
+  Validator: require('./mixins/validator')
 };
 
-exports.components = {
-  Router: require('./components/router')
-};
+exports.components = {};
+
+exports.ext = {};
 
 exports.utils = require('./utils');
 
-exports.Component = require('./component');
-
 exports.registry = require('./registry');
+
+exports.Component = require('./component');
 
 exports.init = function (func, options, root) {
   var argsLength = arguments.length;
   if (argsLength === 1 && !exports.utils.isFunction(arguments[0])) {
     options = arguments[0];
+    func = null;
   }
   root = root || window.document;
   options = options || {};
@@ -29,8 +32,8 @@ exports.init = function (func, options, root) {
     ignoreNotFound: false,
     componentSelector: '[data-component]',
     componentAttribute: 'data-component',
-    optionsAttribute: 'data-options',
-    optionsAttrPrefix: 'data-options-',
+    optionsAttribute: 'data-attrs',
+    optionsAttrPrefix: 'data-attr-',
     readyTopic: 'ui.ready',
     initializingTopic: 'ui.initializing'
   });
