@@ -16,9 +16,6 @@
       this.subscribe('ui.toggleCompleteRequested', this.handleToggle);
       this.subscribe('ui.toggleAllCompleteRequested', this.handleToggleAll);
       this.subscribe('ui.clearCompletedRequested', this.handleClearCompleted);
-      this.subscribe('ui.ready', function () {
-        this.handleLoad({});
-      });
     },
     getCounts: function () {
       return {

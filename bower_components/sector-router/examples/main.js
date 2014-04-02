@@ -1,7 +1,7 @@
 /* global sector */
 
 sector.Component.define({
-  type: 'Navigator',
+  type: 'navigator',
   ui: {
     back: '.back-button',
     foward: '.forward-button',
@@ -9,10 +9,10 @@ sector.Component.define({
     paramRoute: '.param-route-button'
   },
   events: {
-    'back.click': 'handleBackClick',
-    'foward.click': 'handleForwardClick',
-    'randomRoute.click': 'handleRandomRouteClick',
-    'paramRoute.click': 'handleParamRouteClick'
+    'back click': 'handleBackClick',
+    'foward click': 'handleForwardClick',
+    'randomRoute click': 'handleRandomRouteClick',
+    'paramRoute click': 'handleParamRouteClick'
   },
   initialize: function () {
     this.subscribe('ui.routeChanged', function (msg) {
@@ -38,10 +38,9 @@ sector.Component.define({
   }
 }, sector.mixins.View);
 
-sector.components.Router.attachTo(document, {
+sector.ext.router.components.Router.attachTo(document, {
   debug: true,
-  mode: 'history',
-  root: '/routing.html',
+  mode: 'hash',
   routes: {
     abc: '/abc/:foo/123/:bar'
   }
