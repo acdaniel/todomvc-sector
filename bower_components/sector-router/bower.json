@@ -1,12 +1,12 @@
 {
-  "name": "sector",
-  "version": "0.1.8",
-  "homepage": "https://github.com/acdaniel/sector",
+  "name": "sector-router",
+  "version": "0.1.1",
+  "homepage": "https://github.com/acdaniel/sector-router",
   "authors": [
     "Adam Daniel <adam@acdaniel.com>"
   ],
-  "description": "A component and pub/sub based UI library for javascript applications.",
-  "main": "dist/sector.js",
+  "description": "A router and utilities for the Sector library",
+  "main": "dist/sector-router.js",
   "moduleType": [
     "amd",
     "globals",
@@ -17,7 +17,8 @@
     "component",
     "ui",
     "javascript",
-    "browser"
+    "browser",
+    "sector"
   ],
   "license": "MIT",
   "ignore": [
@@ -28,5 +29,8 @@
     "tests",
     "package.json",
     "gulpfile.js"
-  ]
+  ],
+  "dependencies": {
+    "sector": "~0.1.7"
+  }
 }
