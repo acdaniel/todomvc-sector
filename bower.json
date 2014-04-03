@@ -4,6 +4,8 @@
   "dependencies": {
     "todomvc-common": "~0.1.4",
     "sector": "~0.1.2",
-    "depot": "~0.1.6"
+    "depot": "~0.1.6",
+    "sector-router": "~0.1.1",
+    "sector-list": "~0.1.1"
   }
 }
