@@ -35,12 +35,16 @@
       'text': 'label, input.edit',
     },
     initialize: function (options) {
-      this.render(this.data);
-      if (this.data.completed) {
-        utils.addClassName(this.el, 'completed');
-      }
+      this.after('update', function () {
+        if (this.data.completed) {
+          utils.addClassName(this.el, 'completed');
+        } else {
+          utils.removeClassName(this.el, 'completed');
+        }
+      });
       this.subscribe('data.todoUpdated', this.handleTodoUpdated);
       this.subscribe('data.todoRemoved', this.handleTodoRemoved);
+      this.render(this.data);
     },
     saveTodo: function () {
       var todoText = this.data.text.trim(),
@@ -76,7 +80,9 @@
       if (this.el.className.indexOf('editing') !== -1) {
         if (event.which === ENTER_KEY) {
           this.stopEditing();
-          this.saveTodo();
+          utils.defer(function (self) {
+            self.saveTodo();
+          }, this);
         } else if (event.which === ESCAPE) {
           this.stopEditing();
         }
