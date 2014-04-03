@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="../bower_components/sector/dist/sector.js"></script>
+    <script src="../dist/sector-list.js"></script>
+    <script src="main.js"></script>
+  </head>
+  <body>
+    <form data-component='simple-item-form'>
+      <input type="text" name="firstName" placeholder="First Name" autofocus>
+      <input type="text" name="lastName" placeholder="Last Name">
+      <button>Add</button>
+    </form>
+    <ul data-component="simple-list"></ul>
+    <script id="list-item-template" type="text/template">
+      <li>
+        <span class="firstName">{{firstName}}</span>
+        <span class="lastName">{{lastName}}</span>
+        <button class="remove">Remove</button
+      </li>
+    </script>
+  </body>
+</html>
