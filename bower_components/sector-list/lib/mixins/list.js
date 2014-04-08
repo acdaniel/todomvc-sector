@@ -1,5 +1,6 @@
 var sector; try { sector = require('sector'); } catch (e) { sector = window.sector; }
-var utils = sector.utils;
+var utils = sector.utils,
+    Selectable = require('./selectable');
 
 module.exports =  function List () {
 
@@ -8,7 +9,8 @@ module.exports =  function List () {
     itemTagName: 'div',
     itemTagAttrs: null,
     itemComponent: null,
-    itemComponentOptions: null
+    itemComponentOptions: null,
+    allowMultipleSelections: true
   });
 
   this.addItem = function (data, index) {
@@ -19,17 +21,36 @@ module.exports =  function List () {
         el.setAttribute(attr, this.itemTagAttrs[attr]);
       }
     }
-    var options = this.itemComponentOptions || {};
+    var options = this.itemComponentOptions ? utils.clone(this.itemComponentOptions) : {};
     options.id = utils.uniqueId(this.id + '-i');
     options.data = data;
     component.attachTo(el, options);
-    if ('undefined' === typeof index) {
-      index = this.itemParent.children.length;
-    }
-    if (index >= this.itemParent.children.length) {
+    if ('undefined' === typeof index || index >= this.itemParent.children.length) {
       this.itemParent.appendChild(el);
     } else {
       this.insertBefore(el, this.itemParent.children[index]);
+    }
+    if (component.prototype._mixins.indexOf(Selectable) > -1) {
+      this.listenTo(el, 'selected', function (event) {
+        var el = event.target, selected = event.detail.selected, index;
+        if (this.allowMultipleSelections) {
+          index = this._selectedElements.indexOf(el);
+          if (selected && index === -1) {
+            this._selectedElements.push(el);
+          } else if (!selected && index >= 0) {
+            this._selectedElements.splice(index, 1);
+          }
+        } else {
+          if (this._selectedElements[0] && this._selectedElements[0] !== el) {
+            sector.registry.findInstance(this._selectedElements[0].id).selected = false;
+          } else if (!selected) {
+            this._selectedElements = [];
+          }
+          if (selected) {
+            this._selectedElements[0] = el;
+          }
+        }
+      });
     }
   };
 
@@ -61,7 +82,19 @@ module.exports =  function List () {
     }
   };
 
+  this.getSelectionData = function () {
+    var id, data = new Array(this._selectedElements.length);
+    for (var i = 0, l = this._selectedElements.length; i < l; i++) {
+      id = this._selectedElements[i].id;
+      data[i] = sector.registry.findInstance(id).data;
+    }
+    return data;
+  };
+
   this.selectAllItems = function () {
+    if (!this.allowMultipleSelections) {
+      return;
+    }
     var id, children = this.itemParent.children;
     for (var i = 0, l = children.length; i < l; i++) {
       id = children[i].id;
@@ -78,6 +111,7 @@ module.exports =  function List () {
   };
 
   this.before('initialize', function () {
+    this._selectedElements = [];
     this.itemParent = this.itemParent || this.el;
     if (utils.isString(this.itemParent)) {
       this.itemParent = this.select(this.itemParent, true);

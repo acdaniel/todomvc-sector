@@ -4,6 +4,11 @@
     <script src="../bower_components/sector/dist/sector.js"></script>
     <script src="../dist/sector-list.js"></script>
     <script src="main.js"></script>
+    <style>
+    li.selected {
+      background-color: yellow;
+    }
+    </style>
   </head>
   <body>
     <form data-component='simple-item-form'>
@@ -11,13 +16,15 @@
       <input type="text" name="lastName" placeholder="Last Name">
       <button>Add</button>
     </form>
-    <ul data-component="simple-list"></ul>
+    <div data-component="simple-list">
+      <ul></ul>
+      <button>View Selection Data</button>
+    </div>
     <script id="list-item-template" type="text/template">
-      <li>
-        <span class="firstName">{{firstName}}</span>
-        <span class="lastName">{{lastName}}</span>
-        <button class="remove">Remove</button
-      </li>
+      <span class="firstName">{{firstName}}</span>
+      <span class="lastName">{{lastName}}</span>
+      <button class="select">Select</button>
+      <button class="remove">Remove</button>
     </script>
   </body>
 </html>

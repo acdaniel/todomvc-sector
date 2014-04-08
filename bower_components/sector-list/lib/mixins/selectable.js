@@ -15,7 +15,7 @@ module.exports =  function Selectable () {
       if (this.el && this._selected !== selected) {
         this._selected = selected;
         var e = utils.createEvent('selected', { selected: selected });
-        this.el.dispatchEvent(e);
+        this.el.dispatchEvent(e, { selected: this._selected });
       }
     }
   });

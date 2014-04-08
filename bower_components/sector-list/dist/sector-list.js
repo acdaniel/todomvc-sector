@@ -1,12 +1,12 @@
 /**
- * sector-list v0.1.1
+ * sector-list v0.1.3
  * A list component that allows repeating and binding to a collection for the Sector library
  * https://github.com/acdaniel/sector-list
  *
  * Copyright 2014 Adam Daniel <adam@acdaniel.com>
  * Released under the MIT license
  *
- * Date: 2014-04-03T18:57:16.829Z
+ * Date: 2014-04-08T04:07:41.371Z
  */
 !function(e){if("object"==typeof exports)module.exports=e();else if("function"==typeof define&&define.amd)define(e);else{var o;"undefined"!=typeof window?o=window:"undefined"!=typeof global?o=global:"undefined"!=typeof self&&(o=self);var f=o;f=f.sector||(f.sector={}),f=f.ext||(f.ext={}),f.list=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 var sector; try { sector = _dereq_('sector'); } catch (e) { sector = window.sector; }
@@ -27,7 +27,8 @@ exports.components = {
 };
 },{"./components/list":1,"./mixins/list":3,"./mixins/selectable":4}],3:[function(_dereq_,module,exports){
 var sector; try { sector = _dereq_('sector'); } catch (e) { sector = window.sector; }
-var utils = sector.utils;
+var utils = sector.utils,
+    Selectable = _dereq_('./selectable');
 
 module.exports =  function List () {
 
@@ -36,7 +37,8 @@ module.exports =  function List () {
     itemTagName: 'div',
     itemTagAttrs: null,
     itemComponent: null,
-    itemComponentOptions: null
+    itemComponentOptions: null,
+    allowMultipleSelections: true
   });
 
   this.addItem = function (data, index) {
@@ -47,17 +49,36 @@ module.exports =  function List () {
         el.setAttribute(attr, this.itemTagAttrs[attr]);
       }
     }
-    var options = this.itemComponentOptions || {};
+    var options = this.itemComponentOptions ? utils.clone(this.itemComponentOptions) : {};
     options.id = utils.uniqueId(this.id + '-i');
     options.data = data;
     component.attachTo(el, options);
-    if ('undefined' === typeof index) {
-      index = this.itemParent.children.length;
-    }
-    if (index >= this.itemParent.children.length) {
+    if ('undefined' === typeof index || index >= this.itemParent.children.length) {
       this.itemParent.appendChild(el);
     } else {
       this.insertBefore(el, this.itemParent.children[index]);
+    }
+    if (component.prototype._mixins.indexOf(Selectable) > -1) {
+      this.listenTo(el, 'selected', function (event) {
+        var el = event.target, selected = event.detail.selected, index;
+        if (this.allowMultipleSelections) {
+          index = this._selectedElements.indexOf(el);
+          if (selected && index === -1) {
+            this._selectedElements.push(el);
+          } else if (!selected && index >= 0) {
+            this._selectedElements.splice(index, 1);
+          }
+        } else {
+          if (this._selectedElements[0] && this._selectedElements[0] !== el) {
+            sector.registry.findInstance(this._selectedElements[0].id).selected = false;
+          } else if (!selected) {
+            this._selectedElements = [];
+          }
+          if (selected) {
+            this._selectedElements[0] = el;
+          }
+        }
+      });
     }
   };
 
@@ -89,7 +110,19 @@ module.exports =  function List () {
     }
   };
 
+  this.getSelectionData = function () {
+    var id, data = new Array(this._selectedElements.length);
+    for (var i = 0, l = this._selectedElements.length; i < l; i++) {
+      id = this._selectedElements[i].id;
+      data[i] = sector.registry.findInstance(id).data;
+    }
+    return data;
+  };
+
   this.selectAllItems = function () {
+    if (!this.allowMultipleSelections) {
+      return;
+    }
     var id, children = this.itemParent.children;
     for (var i = 0, l = children.length; i < l; i++) {
       id = children[i].id;
@@ -106,6 +139,7 @@ module.exports =  function List () {
   };
 
   this.before('initialize', function () {
+    this._selectedElements = [];
     this.itemParent = this.itemParent || this.el;
     if (utils.isString(this.itemParent)) {
       this.itemParent = this.select(this.itemParent, true);
@@ -113,7 +147,7 @@ module.exports =  function List () {
   });
 
 };
-},{}],4:[function(_dereq_,module,exports){
+},{"./selectable":4}],4:[function(_dereq_,module,exports){
 var sector; try { sector = _dereq_('sector'); } catch (e) { sector = window.sector; }
 var utils = sector.utils;
 
@@ -131,7 +165,7 @@ module.exports =  function Selectable () {
       if (this.el && this._selected !== selected) {
         this._selected = selected;
         var e = utils.createEvent('selected', { selected: selected });
-        this.el.dispatchEvent(e);
+        this.el.dispatchEvent(e, { selected: this._selected });
       }
     }
   });
