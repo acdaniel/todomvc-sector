@@ -1,6 +1,6 @@
 {
   "name": "sector-router",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "homepage": "https://github.com/acdaniel/sector-router",
   "authors": [
     "Adam Daniel <adam@acdaniel.com>"
@@ -33,14 +33,13 @@
   "dependencies": {
     "sector": "~0.1.7"
   },
-  "_release": "0.1.1",
+  "_release": "0.1.2",
   "_resolution": {
     "type": "version",
-    "tag": "0.1.1",
-    "commit": "9b260e55b5733a3c6987aad83fa7ecc6f32e24c7"
+    "tag": "0.1.2",
+    "commit": "59a63361071719115f87fda62aedc29da6d39447"
   },
   "_source": "git://github.com/acdaniel/sector-router.git",
   "_target": "~0.1.1",
-  "_originalSource": "sector-router",
-  "_direct": true
+  "_originalSource": "sector-router"
 }
