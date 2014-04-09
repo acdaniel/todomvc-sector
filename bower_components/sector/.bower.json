@@ -1,6 +1,6 @@
 {
   "name": "sector",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "homepage": "https://github.com/acdaniel/sector",
   "authors": [
     "Adam Daniel <adam@acdaniel.com>"
@@ -29,11 +29,11 @@
     "package.json",
     "gulpfile.js"
   ],
-  "_release": "0.1.11",
+  "_release": "0.1.12",
   "_resolution": {
     "type": "version",
-    "tag": "0.1.11",
-    "commit": "d53f905b2317bc934a6e0cf6fa886a95a77c5103"
+    "tag": "0.1.12",
+    "commit": "0d59a5e18c6a72eb5a2e8b7664d6a2c77797fd19"
   },
   "_source": "git://github.com/acdaniel/sector.git",
   "_target": "~0.1.8",
