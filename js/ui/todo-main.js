@@ -42,6 +42,7 @@
     handleTodoAdded: function (msg) {
       if (msg.data.visible) {
         this.addItem(msg.data.todo);
+        this.el.style.display = 'block';
       }
     },
     handleRouteChanged: function (msg) {

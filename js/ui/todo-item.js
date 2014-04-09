@@ -27,14 +27,14 @@
       'edit.blur': 'handleEditBlur'
     },
     binding: {
-      'id': { attribute: 'data-todo-id' },
-      'completed': {
-        selector: 'input.toggle',
+      '$': { path: 'id', attribute: 'data-todo-id' },
+      'input.toggle': {
+        path: 'complete',
         events: ['click']
       },
-      'text': 'label, input.edit',
+      'label, input.edit': 'text',
     },
-    initialize: function (options) {
+    initialize: function () {
       this.after('update', function () {
         if (this.data.completed) {
           utils.addClassName(this.el, 'completed');
