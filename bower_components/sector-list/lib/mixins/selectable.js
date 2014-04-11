@@ -1,9 +1,8 @@
 var sector; try { sector = require('sector'); } catch (e) { sector = window.sector; }
-var utils = sector.utils;
 
 module.exports =  function Selectable () {
 
-  this.defaults = utils.defaults({}, this.defaults, {
+  this.defaults = sector.defaults({}, this.defaults, {
     selected: false
   });
 
@@ -14,7 +13,7 @@ module.exports =  function Selectable () {
     set: function (selected) {
       if (this.el && this._selected !== selected) {
         this._selected = selected;
-        var e = utils.createEvent('selected', { selected: selected });
+        var e = sector.createEvent('selected', { selected: selected });
         this.el.dispatchEvent(e, { selected: this._selected });
       }
     }

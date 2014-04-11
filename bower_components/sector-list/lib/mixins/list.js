@@ -1,10 +1,9 @@
 var sector; try { sector = require('sector'); } catch (e) { sector = window.sector; }
-var utils = sector.utils,
-    Selectable = require('./selectable');
+var Selectable = require('./selectable');
 
 module.exports =  function List () {
 
-  this.defaults = utils.defaults({}, this.defaults, {
+  this.defaults = sector.defaults({}, this.defaults, {
     itemParent: null,
     itemTagName: 'div',
     itemTagAttrs: null,
@@ -21,8 +20,8 @@ module.exports =  function List () {
         el.setAttribute(attr, this.itemTagAttrs[attr]);
       }
     }
-    var options = this.itemComponentOptions ? utils.clone(this.itemComponentOptions) : {};
-    options.id = utils.uniqueId(this.id + '-i');
+    var options = this.itemComponentOptions ? sector.clone(this.itemComponentOptions) : {};
+    options.id = sector.uniqueId(this.id + '-i');
     options.data = data;
     component.attachTo(el, options);
     if ('undefined' === typeof index || index >= this.itemParent.children.length) {
@@ -113,7 +112,7 @@ module.exports =  function List () {
   this.before('initialize', function () {
     this._selectedElements = [];
     this.itemParent = this.itemParent || this.el;
-    if (utils.isString(this.itemParent)) {
+    if (sector.isString(this.itemParent)) {
       this.itemParent = this.select(this.itemParent, true);
     }
   });

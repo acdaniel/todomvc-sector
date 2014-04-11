@@ -1,12 +1,12 @@
 /**
- * sector-list v0.1.3
+ * sector-list v0.1.4
  * A list component that allows repeating and binding to a collection for the Sector library
  * https://github.com/acdaniel/sector-list
  *
  * Copyright 2014 Adam Daniel <adam@acdaniel.com>
  * Released under the MIT license
  *
- * Date: 2014-04-08T04:07:41.371Z
+ * Date: 2014-04-11T06:26:54.673Z
  */
 !function(e){if("object"==typeof exports)module.exports=e();else if("function"==typeof define&&define.amd)define(e);else{var o;"undefined"!=typeof window?o=window:"undefined"!=typeof global?o=global:"undefined"!=typeof self&&(o=self);var f=o;f=f.sector||(f.sector={}),f=f.ext||(f.ext={}),f.list=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 var sector; try { sector = _dereq_('sector'); } catch (e) { sector = window.sector; }
@@ -27,12 +27,11 @@ exports.components = {
 };
 },{"./components/list":1,"./mixins/list":3,"./mixins/selectable":4}],3:[function(_dereq_,module,exports){
 var sector; try { sector = _dereq_('sector'); } catch (e) { sector = window.sector; }
-var utils = sector.utils,
-    Selectable = _dereq_('./selectable');
+var Selectable = _dereq_('./selectable');
 
 module.exports =  function List () {
 
-  this.defaults = utils.defaults({}, this.defaults, {
+  this.defaults = sector.defaults({}, this.defaults, {
     itemParent: null,
     itemTagName: 'div',
     itemTagAttrs: null,
@@ -49,8 +48,8 @@ module.exports =  function List () {
         el.setAttribute(attr, this.itemTagAttrs[attr]);
       }
     }
-    var options = this.itemComponentOptions ? utils.clone(this.itemComponentOptions) : {};
-    options.id = utils.uniqueId(this.id + '-i');
+    var options = this.itemComponentOptions ? sector.clone(this.itemComponentOptions) : {};
+    options.id = sector.uniqueId(this.id + '-i');
     options.data = data;
     component.attachTo(el, options);
     if ('undefined' === typeof index || index >= this.itemParent.children.length) {
@@ -141,7 +140,7 @@ module.exports =  function List () {
   this.before('initialize', function () {
     this._selectedElements = [];
     this.itemParent = this.itemParent || this.el;
-    if (utils.isString(this.itemParent)) {
+    if (sector.isString(this.itemParent)) {
       this.itemParent = this.select(this.itemParent, true);
     }
   });
@@ -149,11 +148,10 @@ module.exports =  function List () {
 };
 },{"./selectable":4}],4:[function(_dereq_,module,exports){
 var sector; try { sector = _dereq_('sector'); } catch (e) { sector = window.sector; }
-var utils = sector.utils;
 
 module.exports =  function Selectable () {
 
-  this.defaults = utils.defaults({}, this.defaults, {
+  this.defaults = sector.defaults({}, this.defaults, {
     selected: false
   });
 
@@ -164,7 +162,7 @@ module.exports =  function Selectable () {
     set: function (selected) {
       if (this.el && this._selected !== selected) {
         this._selected = selected;
-        var e = utils.createEvent('selected', { selected: selected });
+        var e = sector.createEvent('selected', { selected: selected });
         this.el.dispatchEvent(e, { selected: this._selected });
       }
     }

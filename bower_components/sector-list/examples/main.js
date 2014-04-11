@@ -3,8 +3,7 @@
 var View = sector.mixins.View,
     Bound = sector.mixins.Bound,
     List = sector.ext.list.mixins.List,
-    Selectable = sector.ext.list.mixins.Selectable,
-    utils = sector.utils;
+    Selectable = sector.ext.list.mixins.Selectable;
 
 // form component to add items to list
 sector.Component.define({
@@ -19,7 +18,7 @@ sector.Component.define({
   },
   handleSubmit: function (event) {
     event.preventDefault();
-    this.publish('ui.addItemRequested', utils.clone(this.data));
+    this.publish('ui.addItemRequested', sector.clone(this.data));
   }
 }, View, Bound);
 
@@ -54,9 +53,9 @@ sector.Component.define({
   },
   handleSelected: function () {
     if (this.selected) {
-      utils.addClassName(this.el, 'selected');
+      sector.addClassName(this.el, 'selected');
     } else {
-      utils.removeClassName(this.el, 'selected');
+      sector.removeClassName(this.el, 'selected');
     }
   }
 }, View, Bound, Selectable);

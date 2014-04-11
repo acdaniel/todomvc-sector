@@ -1,3 +1,6 @@
+exports.extend = require('lodash-node/modern/objects/assign');
+exports.extend(exports, require('./utils-ext-global'));
+exports.extend(exports, require('./utils-ext-require'));
 
 exports.define = function (properties /*, mixins... */) {
   var child, mixins = [], parent = this;
@@ -40,9 +43,9 @@ exports.documentReady = function (func) {
   }
 };
 
-exports.select = function (el, selector, one) {
-  if ('undefined' === one) {
-    one = selector || false;
+exports.select = function (el, selector, single) {
+  if ('undefined' === single) {
+    single = selector || false;
     selector = el;
     el = null;
   }
@@ -51,7 +54,7 @@ exports.select = function (el, selector, one) {
     el = null;
   }
   el = el || window.document;
-  return one ? el.querySelector(selector) : el.querySelectorAll(selector);
+  return single ? el.querySelector(selector) : el.querySelectorAll(selector);
 };
 
 exports.matches = function(el, selector) {
@@ -118,6 +121,123 @@ exports.setObjectPath = function (obj, path, value) {
   }
 };
 
-exports.extend = require('lodash-node/modern/objects/assign');
-exports.extend(exports, require('./utils-ext-global'));
-exports.extend(exports, require('./utils-ext-require'));
+exports.buildHtml = function (obj, hooks) {
+  hooks = hooks || {};
+  var buildElement = function (parent, key, content) {
+    var el, tagName, id, className;
+    if (key === '@') {
+      exports.forIn(content, function (value, attr) {
+        parent.setAttribute(attr, value.toString());
+        if (hooks.attribute) {
+          hooks.attribute(parent, attr);
+        }
+      });
+    } else if (key === 'text') {
+      el = document.createTextNode(content.toString());
+    } else {
+      var matches = key.match(/^([a-z][\w0-9-]*)?(?:#([a-z][\w0-9-]*))?((?:\.([a-z][\w0-9-]*))+)?$/i);
+      tagName = matches[1] || 'div';
+      id = matches[2] || null;
+      className = matches[3] ? matches[3].replace(/\./g,' ').trim() : null;
+      el = document.createElement(tagName);
+      if (id) { el.id = id; }
+      if (className) { el.className = className; }
+      if (exports.isString(content)) {
+        el.innerHTML = content;
+      } else {
+        exports.forIn(content, function (value, name) {
+          buildElement(el, name, value);
+        });
+      }
+    }
+    if (el) {
+      if (hooks.element) {
+        hooks.element(el);
+      }
+      parent.appendChild(el);
+    }
+  };
+  var frag = document.createDocumentFragment();
+  exports.forIn(obj, function (value, key) {
+    buildElement(frag, key, value);
+  }, this);
+  return frag;
+};
+
+var animLastTime = 0;
+exports.requestAnimationFrame = exports.bind(window.requestAnimationFrame ||
+    window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame ||
+    window.msRequestAnimationFrame, window);
+
+if (!exports.requestAnimationFrame) {
+  exports.requestAnimationFrame = exports.bind(function (callback) {
+    var currTime = new Date().getTime();
+    var timeToCall = Math.max(0, 16 - (currTime - animLastTime));
+    var id = window.setTimeout(function() { callback(currTime + timeToCall); },
+      timeToCall);
+    animLastTime = currTime + timeToCall;
+    return id;
+  }, window);
+}
+
+exports.cancelAnimationFrame = exports.bind(window.cancelAnimationFrame ||
+  window.mozCancelAnimationFrame || window.webkitCancelAnimationFrame ||
+  window.msCancelAnimationFrame, window);
+
+if (!exports.cancelAnimationFrame) {
+  exports.cancelAnimationFrame = exports.bind(function(id) {
+    clearTimeout(id);
+  }, window);
+}
+
+exports.easing = {
+  linear: function (t, b, c, d) {
+    return c * (t /= d) + b;
+  },
+  easeIn: function (t, b, c, d) {
+    t /= d;
+    return c * t * t + b;
+  },
+  easeOut: function (t, b, c, d) {
+    t /= d;
+    return -c * t * (t - 2) + b;
+  },
+  easeInOut: function (t, b, c, d) {
+    t /= d / 2;
+    if (t < 1) { return c / 2 * t * t + b; }
+    t--;
+    return -c / 2 * (t * (t - 2) - 1) + b;
+  }
+};
+
+exports.animate = function (startValue, endValue, options, self) {
+  exports.defaults(options, {
+    duration: 1000,
+    step: exports.noop,
+    easing: exports.easing.linear,
+    complete: exports.noop
+  });
+  if (exports.isString(options.easing)) {
+    options.easing = exports.easing[options.easing];
+  }
+  startValue = parseFloat(startValue);
+  endValue = parseFloat(endValue);
+  var changeValue = endValue - startValue;
+  var startTime = +new Date();
+  var step = function () {
+    var currentTime = +new Date(),
+        lapsedTime = currentTime - startTime,
+        rate = Math.min(1, lapsedTime / options.duration),
+        val = Math.min(endValue, options.easing(lapsedTime, startValue, changeValue, options.duration));
+    options.step.call(self, rate, val);
+    if (lapsedTime >= options.duration) {
+      options.step.call(self, 1, endValue);
+      exports.defer(function () {
+        options.complete.call(self, 1, endValue);
+      });
+      return;
+    }
+    exports.requestAnimationFrame(step);
+  };
+  return exports.requestAnimationFrame(step);
+};
