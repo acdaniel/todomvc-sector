@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "dependencies": {
     "todomvc-common": "~0.1.4",
-    "sector": "~0.1.8",
+    "sector": "~0.1.14",
     "depot": "~0.1.6",
-    "sector-router": "~0.1.1",
-    "sector-list": "~0.1.1"
+    "sector-router": "~0.1.3",
+    "sector-list": "~0.1.4"
   }
 }

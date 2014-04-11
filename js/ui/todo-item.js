@@ -7,8 +7,7 @@
 
   var Component = sector.Component,
       View = sector.mixins.View,
-      Bound = sector.mixins.Bound,
-      utils = sector.utils;
+      Bound = sector.mixins.Bound;
 
   Component.define({
     type: 'todo-item',
@@ -37,9 +36,9 @@
     initialize: function () {
       this.after('update', function () {
         if (this.data.completed) {
-          utils.addClassName(this.el, 'completed');
+          sector.addClassName(this.el, 'completed');
         } else {
-          utils.removeClassName(this.el, 'completed');
+          sector.removeClassName(this.el, 'completed');
         }
       });
       this.subscribe('data.todoUpdated', this.handleTodoUpdated);
@@ -58,12 +57,12 @@
     },
     stopEditing: function () {
       if (!this.el) { return; }
-      utils.removeClassName(this.el, 'editing');
+      sector.removeClassName(this.el, 'editing');
       this.preEditValue = null;
     },
     handleDblClick: function () {
       this.preEditValue = this.data.text.trim();
-      utils.addClassName(this.el, 'editing');
+      sector.addClassName(this.el, 'editing');
       this.ui.edit.focus();
     },
     handleToggleClick: function () {
@@ -80,7 +79,7 @@
       if (this.el.className.indexOf('editing') !== -1) {
         if (event.which === ENTER_KEY) {
           this.stopEditing();
-          utils.defer(function (self) {
+          sector.defer(function (self) {
             self.saveTodo();
           }, this);
         } else if (event.which === ESCAPE) {
