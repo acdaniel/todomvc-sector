@@ -2,7 +2,7 @@
 function Alertable () {
 
   this.clearAlerts = function () {
-    var alerts = Array.prototype.slice.call(this.select('div.alert'));
+    var alerts = [].slice.call(this.selectAll('div.alert'));
     for (var i = alerts.length - 1; i >= 0; i--) {
       this.el.removeChild(alerts[i]);
     }
@@ -11,23 +11,31 @@ function Alertable () {
   this.showAlert = function (msg) {
     var alert = sector.buildHtml({
       'div.alert': {
-        '@': { style: 'height: 0; opacity: 0;' },
+        '@': { style: 'opacity: 0;' },
         'span': msg,
-        'a.close': '&#735;'
+        'a.close': { 'html': '&#735;' }
       }
     }).firstChild;
     this.el.insertBefore(alert, this.el.firstChild);
     this.listenTo(alert, 'click:close', function (event) {
       event.preventDefault();
       if (event.target.className === 'close') {
-        this.el.removeChild(alert);
+        sector.animate(1, 0, {
+          duration: 200,
+          easing: 'easeIn',
+          step: function (progress, value) {
+            alert.style.opacity = 1 - progress;
+          },
+          complete: function () {
+            this.el.removeChild(alert);
+          }
+        }, this);
       }
     });
     sector.animate(0, 1, {
       duration: 200,
       easing: 'easeOut',
       step: function (progress, value) {
-        alert.style.height = value + 'em';
         alert.style.opacity = progress;
       }
     }, this);
@@ -44,19 +52,19 @@ sector.Component.define({
   },
   events: {
     'submit': 'handleSubmit',
-    'firstName change': 'handleChange',
-    'firstName invalid': 'handleInvalid',
-    'lastName invalid': 'handleInvalid',
-    'email invalid': 'handleInvalid'
+    'change @firstName': 'handleChange',
+    'invalid @firstName': 'handleInvalid',
+    'invalid @lastName': 'handleInvalid',
+    'invalid @email': 'handleInvalid'
   },
   validation: {
-    firstName: { required: true },
-    lastName: { required: true },
-    email: { email: true }
+    '@firstName': { required: true },
+    '@lastName': { required: true },
+    '@email': { email: true }
   },
   binding: {
     'input[name=firstName], span.firstName': {
-      path: 'name.first',
+      key: 'name.first',
       events: ['change', 'keyup']
     },
     'input[name=lastName], span.lastName': 'name.last',

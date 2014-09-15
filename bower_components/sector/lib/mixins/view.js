@@ -5,18 +5,24 @@ var View = function View () {
 
   this.setupUI = function () {
     if (this.ui) {
-      this._ui || ( this._ui = this.ui);
+      this._ui || (this._ui = this.ui);
       var binding = utils.result(this, '_ui');
       this.ui = {};
-      utils.forIn(binding, function (selector, key) {
-        this.ui[key] = this.select(selector, true);
+      utils.forIn(binding, function (options, key) {
+        if (utils.isString(options)) {
+          options = {
+            selector: options,
+            all: false
+          };
+        }
+        this.ui[key] = options.all ? this.selectAll(options.selector) : this.select(options.selector);
       }, this);
     }
   };
 
   this.teardownUI = function () {
     if (this.ui) {
-      this._ui || ( this._ui = this.ui);
+      this._ui || (this._ui = this.ui);
       var binding = utils.result(this, '_ui');
       utils.forIn(binding, function (selector, key) {
         delete this.ui[key];
@@ -27,13 +33,18 @@ var View = function View () {
   this.setupEvents = function () {
     if (this.events) {
       utils.forIn(this.events, function (func, event) {
-        var el, type, parts = event.split(/[. ]+/, 2);
-        if (parts.length === 1) {
-          el = this.el;
-          type = parts[0];
+        var selector, el, type, spaceIndex = event.indexOf(' ');
+        if (spaceIndex >= 0) {
+          type = event.substr(0, event.indexOf(' '));
+          selector = event.substr(event.indexOf(' ') + 1);
+          if (selector[0] === '@') {
+            el = this.ui[selector.substr(1)];
+          } else {
+            el = this.selectAll(selector);
+          }
         } else {
-          el = this.ui[parts[0]];
-          type = parts[1];
+          el = this.el;
+          type = event;
         }
         this.listenTo(el, type, func);
       }, this);
@@ -43,13 +54,18 @@ var View = function View () {
   this.teardownEvents = function () {
     if (this.events) {
       utils.forIn(this.events, function (func, event) {
-        var el, type, parts = event.split(/[. ]+/, 2);
-        if (parts.length === 1) {
-          el = this.el;
-          type = parts[0];
+        var selector, el, type, spaceIndex = event.indexOf(' ');
+        if (spaceIndex >= 0) {
+          type = event.substr(0, event.indexOf(' '));
+          selector = event.substr(event.indexOf(' ') + 1);
+          if (selector[0] === '@') {
+            el = this.ui[selector.substr(1)];
+          } else {
+            el = this.selectAll(selector);
+          }
         } else {
-          el = this.ui[parts[0]];
-          type = parts[1];
+          el = this.el;
+          type = event;
         }
         this.stopListening(el, type);
       }, this);
@@ -70,7 +86,7 @@ var View = function View () {
           if (utils.has(_templateCache, this.template)) {
             source = _templateCache[this.template];
           } else {
-            el = window.document.querySelector(this.template);
+            el = document.querySelector(this.template);
             if (!el) { throw Error('template ' + this.template + ' not found'); }
             source = el.innerHTML;
             _templateCache[this.template] = source;
@@ -86,7 +102,9 @@ var View = function View () {
   }
 
   this.remove = function () {
-    this.el.parentNode.removeChild(this.el);
+    if (this.el && this.el.parentNode) {
+      this.el.parentNode.removeChild(this.el);
+    }
   };
 
   this.before('initialize', function () {

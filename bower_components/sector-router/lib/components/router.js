@@ -1,123 +1,104 @@
-/*
- * inspiration and some code borrowed from
- * http://krasimirtsonev.com/blog/article/A-modern-JavaScript-router-in-100-lines-history-api-pushState-hash-url
- * and from Backbone.Router https://github.com/jashkenas/backbone
- */
 var sector; try { sector = require('sector'); } catch (e) { sector = window.sector; }
-
-var optionalParam = /\((.*?)\)/g;
-var namedParam    = /(\(\?)?:\w+/g;
-var splatParam    = /\*\w+/g;
-var escapeRegExp  = /[\-{}\[\]+?.,\\\^$|#\s]/g;
+var pathToRegexp = require('path-to-regexp');
+var zipObject = require('lodash-node/modern/arrays/zipObject');
 
 module.exports = sector.Component.define({
   type: 'router',
   defaults: {
-    mode: 'hash',
-    root: '/',
-    routeTopic: 'ui.routeChanged',
-    backRequestTopic: 'ui.navigateBackRequested',
-    forwardRequestTopic: 'ui.navigateForwardRequested',
     navigateRequestTopic: 'ui.navigateRequested',
-    uiReadyTopic: 'ui.ready'
+    protectRouteRequestTopic: 'ui.protectRouteRequested',
+    reloadRouteRequestTopic: 'ui.reloadRouteRequested',
+    uiReadyTopic: 'ui.ready',
+    routeChangedTopic: 'ui.routeChanged',
+    confirmRouteChangeRequestTopic: 'ui.confirmRouteChangeRequested',
+    routeChangeConfirmedTopic: 'ui.routeChangeConfirmed'
   },
   initialize: function (options) {
-    if (!history.pushState) { this.mode = 'hash'; }
-    if (this.root !== '/') {
-      this.root = '/' + this.clearSlashes(options.root) + '/';
-    }
-    this.routes = {};
+    this.routes = [];
+    this.protectedRouteFragment = null;
     if (options.routes) {
-      for (var name in options.routes) {
-        this.addRoute(name, options.routes[name]);
+      for (var path in options.routes) {
+        this.addRoute(path, options.routes[path]);
       }
     }
     this.subscribe(this.navigateRequestTopic, this.handleNavigateRequest);
-    this.subscribe(this.backRequestTopic, this.handleBackRequest);
-    this.subscribe(this.forwardRequestTopic, this.handleForwardRequest);
+    this.subscribe(this.protectRouteRequestTopic, this.handleProtectRouteRequest);
+    this.subscribe(this.routeChangeConfirmedTopic, this.handleRouteChangeConfirmed);
+    this.subscribe(this.reloadRouteRequestTopic, this.handleReloadRequest);
     this.listenTo(window, 'hashchange', this.handleHashChange);
     this.subscribe(this.uiReadyTopic, function () {
-      var msg = this.parseFragment(this.getFragment());
-      this.publish(this.routeTopic, msg);
+      this.handleHashChange();
     });
   },
-  addRoute: function (name, route) {
-    route = route.replace(escapeRegExp, '\\$&')
-      .replace(optionalParam, '(?:$1)?')
-      .replace(namedParam, function(match, optional) {
-        return optional ? match : '([^/?]+)';
-      })
-      .replace(splatParam, '([^?]*?)');
-    var regex = new RegExp('^' + route + '(?:\\?([\\s\\S]*))?$');
-    this.trace('adding named route: ' + name, regex);
-    this.routes[name] = regex;
+  addRoute: function (route, topic) {
+    this.trace('adding named route: ' + topic, route);
+    var keys = [];
+    var re = pathToRegexp(route, keys);
+    this.routes.push({ topic: topic, re: re, keys: keys });
   },
   getFragment: function () {
+    return this.parseFragment(window.location.href);
+  },
+  parseFragment: function (url) {
     var fragment = '', match;
-    if (this.mode === 'history') {
-      fragment = this.clearSlashes(decodeURI(location.pathname + location.search));
-      fragment = fragment.replace(/\?(.*)$/, '');
-      fragment = this.root !== '/' ? fragment.replace(this.root, '') : fragment;
-    } else {
-      match = window.location.href.match(/#(.*)$/);
-      fragment = match ? match[1] : '';
-    }
+    match = url.match(/#(.*)$/);
+    fragment = match ? match[1] : '';
     return fragment;
   },
-  parseFragment: function (fragment) {
+  lookupRoute: function (fragment) {
     fragment = fragment || '/';
     this.trace('parsing fragment ' + fragment);
-    for (var name in this.routes) {
-      var route = this.routes[name];
-      this.trace('eval route ' + name, route);
-      var params = route.exec(fragment);
-      if (params) {
-        params = params.slice(1);
+    var mapKeyName = function (key) {
+      return key.name;
+    };
+    for (var i = 0, l = this.routes.length; i < l; i++) {
+      var route = this.routes[i];
+      this.trace('eval route', route);
+      var isMatch = route.re.test(fragment);
+      if (isMatch) {
+        var results = route.re.exec(fragment);
+        this.trace('route selected', results);
+        var keyNames = route.keys.map(mapKeyName);
         return {
-          name: name,
-          path: fragment,
-          params: sector.map(params, function(param, i) {
-            // Don't decode the search params.
-            if (i === params.length - 1) { return param || null; }
-            return param ? decodeURIComponent(param) : null;
-          })
+          topic: route.topic,
+          data: zipObject(keyNames, results.slice(1))
         };
       }
     }
-    return {};
   },
-  clearSlashes: function(path) {
-    return path.toString().replace(/\/$/, '').replace(/^\//, '');
-  },
-  handleHashChange: function () {
-    var fragment, msg;
+  handleHashChange: function (event) {
+    var fragment, route;
     fragment = this.getFragment();
-    msg = this.parseFragment(fragment);
-    this.publish(this.routeTopic, msg);
+    if (this.protectedRouteFragment && fragment !== this.protectedRouteFragment) {
+      this.publish(this.confirmRouteChangeRequestTopic, { currentRoute: this.protectedRouteFragment, attemptedRoute: fragment });
+    } else {
+      this.publish(this.routeChangedTopic, { path: fragment || '/' });
+      route = this.lookupRoute(fragment);
+      if (route) {
+        this.publish(route.topic, route.data);
+      }
+    }
   },
   handleNavigateRequest: function (msg) {
-    var path = msg.data ? msg.data : '';
-    if(this.mode === 'history') {
-      history.pushState(null, null, this.root + this.clearSlashes(path));
-    } else {
-      window.location.href.match(/#(.*)$/);
-      window.location.href = window.location.href.replace(/#(.*)$/, '') + '#' + path;
+    var path = msg.data ? msg.data : '/';
+    if (msg.ignoreProtected) {
+      this.protectedRouteFragment = null;
     }
-    var outMsg = this.parseFragment(path);
-    this.publish(this.routeTopic, outMsg);
+    window.location.href = window.location.href.replace(/#(.*)$/, '') + '#' + path;
   },
-  handleBackRequest: function () {
-    var fragment, msg;
-    window.history.back();
-    fragment = this.getFragment();
-    msg = this.parseFragment(fragment);
-    this.publish(this.routeTopic, msg);
+  handleReloadRequest: function (msg) {
+    var path = msg.data ? msg.data : this.getFragment();
+    this.stopListening(window, 'hashchange');
+    window.location.href = window.location.href.replace(/#(.*)$/, '') + '#' + path;
+    window.location.reload();
   },
-  handleForwardRequest: function () {
-    var fragment, msg;
-    window.history.forward();
-    fragment = this.getFragment();
-    msg = this.parseFragment(fragment);
-    this.publish(this.routeTopic, msg);
+  handleProtectRouteRequest: function (msg) {
+    var protect = msg.data !== false ? true : false;
+    this.protectedRouteFragment = protect ? this.getFragment() : null;
+  },
+  handleRouteChangeConfirmed: function (msg) {
+    this.protectedRouteFragment = null;
+    window.location.href = window.location.href.replace(/#(.*)$/, '') + '#' + msg.data.route;
+    this.handleHashChange();
   }
 });

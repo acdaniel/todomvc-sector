@@ -2,14 +2,13 @@
 (function() {
   'use strict';
 
-  var ENTER_KEY = 13,
-      ESCAPE = 27;
+  var ENTER_KEY = 13;
+  var ESCAPE = 27;
 
-  var Component = sector.Component,
-      View = sector.mixins.View,
-      Bound = sector.mixins.Bound;
+  var View = sector.mixins.View;
+  var Bound = sector.mixins.Bound;
 
-  Component.define({
+  sector.Component.define({
     type: 'todo-item',
     template: '#template-todo-item',
     ui: {
@@ -20,15 +19,15 @@
     },
     events: {
       'dblclick': 'handleDblClick',
-      'toggle.click': 'handleToggleClick',
-      'destroy.click': 'handleDestroyClick',
-      'edit.keydown': 'handleEditKeydown',
-      'edit.blur': 'handleEditBlur'
+      'click @toggle': 'handleToggleClick',
+      'click @destroy': 'handleDestroyClick',
+      'keydown @edit': 'handleEditKeydown',
+      'blur @edit': 'handleEditBlur'
     },
     binding: {
-      '$': { path: 'id', attribute: 'data-todo-id' },
-      'input.toggle': {
-        path: 'complete',
+      '$': { key: 'id', attribute: 'data-todo-id' },
+      '@toggle': {
+        key: 'completed',
         events: ['click']
       },
       'label, input.edit': 'text',
@@ -66,7 +65,7 @@
       this.ui.edit.focus();
     },
     handleToggleClick: function () {
-      var completed = this.data.checked,
+      var completed = this.data.completed,
           todoId = this.data.id;
       this.publish('ui.toggleCompleteRequested', {
         id: todoId, completed: completed
