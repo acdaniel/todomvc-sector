@@ -7,9 +7,9 @@
     {
       mode: 'hash',
       routes: {
-        all: '/',
-        active: '/active',
-        completed: '/completed'
+        '/': 'ui.viewAllRequested',
+        '/active': 'ui.viewActiveRequested',
+        '/completed': 'ui.viewCompletedRequested'
       }
     }
   );

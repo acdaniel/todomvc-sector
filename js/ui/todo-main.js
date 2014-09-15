@@ -2,18 +2,17 @@
 (function() {
   'use strict';
 
-  var Component = sector.Component,
-      View = sector.mixins.View,
-      List = sector.ext.list.mixins.List;
+  var View = sector.mixins.View;
+  var List = sector.ext.list.mixins.List;
 
-  Component.define({
+  sector.Component.define({
     type: 'todo-main',
     ui: {
       toggle: '#toggle-all',
       list: '#todo-list'
     },
     events: {
-      'toggle.click': 'handleToggleClick'
+      'click @toggle': 'handleToggleClick'
     },
     itemParent: '#todo-list',
     itemTagName: 'li',
@@ -24,7 +23,9 @@
       this.subscribe('data.todoAdded', this.handleTodoAdded);
       this.subscribe('data.todoRemoved', this.updateDisplay);
       this.subscribe('data.todoUpdated', this.updateDisplay);
-      this.subscribe('ui.routeChanged', this.handleRouteChanged);
+      this.subscribe('ui.viewAllRequested', this.handleViewAll);
+      this.subscribe('ui.viewActiveRequested', this.handleViewActive);
+      this.subscribe('ui.viewCompletedRequested', this.handleViewCompleted);
     },
     handleToggleClick: function () {
       var completed = this.ui.toggle.checked;
@@ -45,9 +46,14 @@
         this.el.style.display = 'block';
       }
     },
-    handleRouteChanged: function (msg) {
-      var filter = msg.data.name || 'all';
-      this.publish('ui.loadTodosRequested', {filter: filter});
+    handleViewAll: function (msg) {
+      this.publish('ui.loadTodosRequested', {filter: 'all'});
+    },
+    handleViewActive: function (msg) {
+      this.publish('ui.loadTodosRequested', {filter: 'active'});
+    },
+    handleViewCompleted: function (msg) {
+      this.publish('ui.loadTodosRequested', {filter: 'completed'});
     }
   }, View, List);
 

@@ -15,12 +15,12 @@ sector.Component.define({
     form: 'form'
   },
   events: {
-    'form submit': 'handleHelloSubmit'
+    'submit @form': 'handleHelloSubmit'
   },
   binding: {
     'input[name=name]': 'name',
     'span.name': {
-      path: 'name',
+      key: 'name',
       format: function (value) {
         return '"' + value + '"';
       }
@@ -41,18 +41,25 @@ sector.Component.define({
     form: 'form.animate'
   },
   events: {
-    'form submit': 'handleAnimateSubmit'
+    'submit @form': 'handleAnimateSubmit'
   },
   binding: {
     'input[name=startValue]': 'startValue',
     'input[name=endValue]': 'endValue',
+    '.progress': {
+      key: 'progress',
+      property: 'style.width',
+      format: function (value) {
+        return (value * 100) + '%';
+      }
+    },
     '.box': {
-      path: 'currentValue',
+      key: 'currentValue',
       property: 'style.left',
       format: function (value) {
         return value + 'px';
       }
-    }
+    },
   },
   initialize: function () {
     this.update({
@@ -63,10 +70,12 @@ sector.Component.define({
   },
   handleAnimateSubmit: function (event) {
     event.preventDefault();
+    this.set('progress', 0);
     this.set('currentValue', this.data.startValue);
     sector.animate(this.data.startValue, this.data.endValue, {
       easing: 'easeInOut',
       step: function (progress, value) {
+        this.set('progress', progress);
         this.set('currentValue', value);
       }
     }, this);
