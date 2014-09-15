@@ -2,8 +2,12 @@ exports.extend = require('lodash-node/modern/objects/assign');
 exports.extend(exports, require('./utils-ext-global'));
 exports.extend(exports, require('./utils-ext-require'));
 
+// Defines a new class by adding the given properties to 'this'
+// prototype and then applying the given mixins.
 exports.define = function (properties /*, mixins... */) {
   var child, mixins = [], parent = this;
+  // if a constructor is provided in the properties use it otherwise create
+  // one based on the parent
   if (properties && exports.has(properties, 'constructor')) {
     child = properties.constructor;
   } else {
@@ -12,6 +16,7 @@ exports.define = function (properties /*, mixins... */) {
   child.prototype = exports.create(parent.prototype, properties);
   exports.extend(child, parent);
   exports.bindAll(child);
+  // apply all the mixins
   if (arguments.length > 1) {
     mixins = new Array(arguments.length - 1);
     for (var i = 1, l = mixins.length; i <= l; i++) {
@@ -22,10 +27,12 @@ exports.define = function (properties /*, mixins... */) {
   return child;
 };
 
+// Applies the given array of mixins to 'this'
 exports.mixin = function (mixins) {
   if (!mixins) { return; }
   this._mixins = exports.has(this, '_mixins') ? this._mixins : [];
   exports.forEach(mixins, function (mixin) {
+    // if the mixin has already been applied, skip it
     if (this._mixins.indexOf(mixin) === -1) {
       mixin.call(this);
       this._mixins.push(mixin);
@@ -33,30 +40,32 @@ exports.mixin = function (mixins) {
   }, this);
 };
 
+// Convenience method detecting when the DOM is loaded and calling the given
+// function
 exports.documentReady = function (func) {
-  if (window.document.readyState === 'complete' ||
-      window.document.readyState === 'loaded' ||
-      window.document.readyState === 'interactive') {
+    // if the document is already loaded, call the function
+  if (document.readyState === 'complete' ||
+      document.readyState === 'loaded' ||
+      document.readyState === 'interactive') {
     func();
   } else {
-    window.document.addEventListener('DOMContentLoaded', func);
+    document.addEventListener('DOMContentLoaded', func);
   }
 };
 
-exports.select = function (el, selector, single) {
-  if ('undefined' === single) {
-    single = selector || false;
-    selector = el;
-    el = null;
-  }
-  if (!selector) {
-    selector = el;
-    el = null;
-  }
-  el = el || window.document;
-  return single ? el.querySelector(selector) : el.querySelectorAll(selector);
+// Wraps 'querySelectorAll' and defaults the parent to document
+exports.selectAll = function (selector, parent) {
+  parent = parent || document;
+  return parent.querySelectorAll(selector);
 };
 
+// Wraps 'querySelector' and defaults the parent to document
+exports.select = function (selector, parent) {
+    parent = parent || document;
+    return parent.querySelector(selector);
+};
+
+// Returns true if the given element matches the given selector
 exports.matches = function(el, selector) {
   // borrowed from http://youmightnotneedjquery.com/
   var _matches = (el.matches || el.matchesSelector || el.msMatchesSelector || el.mozMatchesSelector || el.webkitMatchesSelector || el.oMatchesSelector);
@@ -71,21 +80,41 @@ exports.matches = function(el, selector) {
   }
 };
 
+// Adds the given className to the element unless it is already added
 exports.addClassName = function (el, className) {
-  var regex = new RegExp('(^|\\s)' + className + '(\\s|$)');
-  if (!regex.test(el.className)) {
-    el.className = (el.className + ' ' + className).trim();
+  var regex, classes = className.split(' ');
+  for (var i = 0, l = classes.length; i < l; i++) {
+    regex = new RegExp('(^|\\s)' + classes[i] + '(\\s|$)');
+    if (!regex.test(el.className)) {
+      el.className = (el.className + ' ' + classes[i]).trim();
+    }
   }
 };
 
+// Removes the given className to the element
 exports.removeClassName = function (el, className) {
   var regex, classes = className.split(' ');
   for (var i = 0, l = classes.length; i < l; i++) {
-    regex = new RegExp('(^|\\s)' + className + '(\\s|$)');
+    regex = new RegExp('(^|\\s)' + classes[i] + '(\\s|$)');
     el.className = el.className.replace(regex, ' ').trim();
   }
 };
 
+// If the given className in already added to the element, then it is removed
+// otherwise it is added
+exports.toggleClassName = function (el, className) {
+  var regex, classes = className.split(' ');
+  for (var i = 0, l = classes.length; i < l; i++) {
+    regex = new RegExp('(^|\\s)' + classes[i] + '(\\s|$)');
+    if (!regex.test(el.className)) {
+      el.className = (el.className + ' ' + classes[i]).trim();
+    } else {
+      el.className = el.className.replace(regex, ' ').trim();
+    }
+  }
+};
+
+// Creates a crossbrowser event
 exports.createEvent = function (type, data, options) {
   var e;
   options = options || { bubbles: false, cancelable: false};
@@ -94,19 +123,22 @@ exports.createEvent = function (type, data, options) {
       {detail: data, bubbles: options.bubbles, cancelable: options.cancelable}
     );
   } else {
-    e = window.document.createEvent('CustomEvent');
+    e = document.createEvent('CustomEvent');
     e.initCustomEvent(type, options.bubbles, options.cancelable, data);
   }
   return e;
 };
 
+// Follows the given property path on the object and returns the value
+// i.e. 'name.first'
 exports.getObjectPath = function (obj, path) {
   var parts = path.split('.');
   return parts.reduce(function (o, k) {
-    return o[k];
+    return o && exports.has(o, k) ? o[k] : undefined;
   }, obj);
 };
 
+// Sets the value at the given property path on the object
 exports.setObjectPath = function (obj, path, value) {
   var o = obj, parts = path.split('.');
   for (var i = 0, l = parts.length; i < l; i++) {
@@ -121,6 +153,10 @@ exports.setObjectPath = function (obj, path, value) {
   }
 };
 
+// Takes an object that represents HTML and returns a document fragment
+// { p: {'span.myclass': 'Click ', 'a#mylink': { '@': { href: 'http://example.com' }, text: 'Here' } } } }
+// would produce
+// <p><span class="myclass">Click </span><a id="mylink" href="http://example.com">Here</a></p>
 exports.buildHtml = function (obj, hooks) {
   hooks = hooks || {};
   var buildElement = function (parent, key, content) {
@@ -134,6 +170,8 @@ exports.buildHtml = function (obj, hooks) {
       });
     } else if (key === 'text') {
       el = document.createTextNode(content.toString());
+    } else if (key === 'html') {
+      parent.innerHTML = content.toString();
     } else {
       var matches = key.match(/^([a-z][\w0-9-]*)?(?:#([a-z][\w0-9-]*))?((?:\.([a-z][\w0-9-]*))+)?$/i);
       tagName = matches[1] || 'div';
@@ -143,7 +181,7 @@ exports.buildHtml = function (obj, hooks) {
       if (id) { el.id = id; }
       if (className) { el.className = className; }
       if (exports.isString(content)) {
-        el.innerHTML = content;
+        el.textContent = content;
       } else {
         exports.forIn(content, function (value, name) {
           buildElement(el, name, value);
@@ -165,6 +203,7 @@ exports.buildHtml = function (obj, hooks) {
 };
 
 var animLastTime = 0;
+// Crossbrowser 'requestAnimationFrame' implementation
 exports.requestAnimationFrame = exports.bind(window.requestAnimationFrame ||
     window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame ||
     window.msRequestAnimationFrame, window);
@@ -180,6 +219,7 @@ if (!exports.requestAnimationFrame) {
   }, window);
 }
 
+// Crossbrowser 'cancelAnimationFrame' implementation
 exports.cancelAnimationFrame = exports.bind(window.cancelAnimationFrame ||
   window.mozCancelAnimationFrame || window.webkitCancelAnimationFrame ||
   window.msCancelAnimationFrame, window);
@@ -190,6 +230,7 @@ if (!exports.cancelAnimationFrame) {
   }, window);
 }
 
+// Simple easing function used by animation
 exports.easing = {
   linear: function (t, b, c, d) {
     return c * (t /= d) + b;
@@ -210,7 +251,8 @@ exports.easing = {
   }
 };
 
-exports.animate = function (startValue, endValue, options, self) {
+exports.animate = function (startValue, endValue, options, thisArg) {
+  options = options || {};
   exports.defaults(options, {
     duration: 1000,
     step: exports.noop,
@@ -222,22 +264,20 @@ exports.animate = function (startValue, endValue, options, self) {
   }
   startValue = parseFloat(startValue);
   endValue = parseFloat(endValue);
-  var changeValue = endValue - startValue;
-  var startTime = +new Date();
+  var changeValue = endValue - startValue, startTime = +new Date();
   var step = function () {
     var currentTime = +new Date(),
         lapsedTime = currentTime - startTime,
         rate = Math.min(1, lapsedTime / options.duration),
-        val = Math.min(endValue, options.easing(lapsedTime, startValue, changeValue, options.duration));
-    options.step.call(self, rate, val);
-    if (lapsedTime >= options.duration) {
-      options.step.call(self, 1, endValue);
-      exports.defer(function () {
-        options.complete.call(self, 1, endValue);
-      });
-      return;
+        val = options.easing(lapsedTime, startValue, changeValue, options.duration);
+    if (rate < 1) {
+      if (options.step.call(thisArg, rate, val) !== false) {
+        exports.requestAnimationFrame(step);
+      }
+    } else {
+      options.step.call(thisArg, 1, endValue);
+      options.complete.call(thisArg, 1, endValue);
     }
-    exports.requestAnimationFrame(step);
   };
-  return exports.requestAnimationFrame(step);
+  step();
 };

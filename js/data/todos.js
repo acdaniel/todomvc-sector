@@ -2,9 +2,7 @@
 (function( window ) {
   'use strict';
 
-  var Component = sector.Component;
-
-  Component.define({
+  sector.Component.define({
     type: 'todos',
     initialize: function () {
       this.store = window.depot('todos', { idAttribute: 'id' });

@@ -27,7 +27,7 @@ module.exports =  function List () {
     if ('undefined' === typeof index || index >= this.itemParent.children.length) {
       this.itemParent.appendChild(el);
     } else {
-      this.insertBefore(el, this.itemParent.children[index]);
+      this.itemParent.insertBefore(el, this.itemParent.children[index]);
     }
     if (component.prototype._mixins.indexOf(Selectable) > -1) {
       this.listenTo(el, 'selected', function (event) {
@@ -113,7 +113,7 @@ module.exports =  function List () {
     this._selectedElements = [];
     this.itemParent = this.itemParent || this.el;
     if (sector.isString(this.itemParent)) {
-      this.itemParent = this.select(this.itemParent, true);
+      this.itemParent = this.select(this.itemParent);
     }
   });
 

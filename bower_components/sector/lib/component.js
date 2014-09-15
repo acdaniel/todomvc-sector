@@ -20,13 +20,7 @@ var Component = function (options) {
   if (utils.has(specialOptions, 'el')) {
     this.el = utils.isString(specialOptions.el) ?
       utils.select(specialOptions.el, true) : specialOptions.el;
-    this.el.id = this.id;
-    this.el.addEventListener('DOMNodeRemoved', function (event) {
-      if (event.target === self.el) {
-        self.el.removeEventListener('DOMNodeRemoved', this);
-        self.destroy();
-      }
-    }, false);
+    if (this.el !== document) { this.el.id = this.id; }
     this.after('destroy', function () {
       this.el = undefined;
     });
@@ -35,8 +29,12 @@ var Component = function (options) {
   this.initialize.call(this, initOptions);
 };
 
-Component.prototype.select = function (selector, one) {
-  return utils.select(this.el, selector, one);
+Component.prototype.select = function (selector) {
+  return utils.select(selector, this.el);
+};
+
+Component.prototype.selectAll = function (selector) {
+  return utils.selectAll(selector, this.el);
 };
 
 Component.prototype.toString = function () {
@@ -68,8 +66,9 @@ Component.attachTo = function (selector, options) {
   for (var i = 0, l = elements.length; i < l; i++) {
     options.el = elements[i];
     options.id = options.id || elements[i].id;
+    /*jshint newcap: false */
     instance = new construct(options);
-  };
+  }
 };
 
 Component.destroyAll = function () {

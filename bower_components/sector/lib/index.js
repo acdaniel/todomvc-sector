@@ -1,15 +1,10 @@
 
 exports.Component = require('./component');
 
-exports.init = function (func, options, root) {
-  var argsLength = arguments.length;
-  if (argsLength === 1 && !exports.isFunction(arguments[0])) {
-    options = arguments[0];
-    func = null;
-  }
-  root = root || window.document;
+exports.init = function (options, cb) {
   options = options || {};
   exports.defaults(options, {
+    root: document,
     publishProgress: false,
     ignoreNotFound: false,
     componentSelector: '[data-component]',
@@ -23,20 +18,41 @@ exports.init = function (func, options, root) {
     var e = exports.createEvent('pubsub.' + topic,
       { topic: topic, data: data }
     );
-    window.document.dispatchEvent(e);
+    document.dispatchEvent(e);
   };
   exports.documentReady(function () {
-    if (func) { func(); }
-    var nodes = [].slice.call(root.querySelectorAll(options.componentSelector));
+    var nodes = [].slice.call(options.root.querySelectorAll(options.componentSelector));
     var componentCount = nodes.length;
+    function finishInit () {
+      if (cb) { cb(); }
+      pub(options.readyTopic, {});
+    }
     function deferedForEach (fn) {
       var arr = this, i = 0, l = this.length;
       function next () {
-        if (i >= l) { return; }
+        if (i >= l) { return finishInit(); }
         fn(arr[i], i++);
         exports.defer(next);
       }
       next();
+    }
+    if (MutationObserver) {
+      var observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          var node, instance;
+          for (var i = 0, l = mutation.removedNodes.length; i < l; i++) {
+            instance = null;
+            node = mutation.removedNodes[i];
+            if (node.id) {
+              instance = exports.registry.findInstance(node.id);
+              if (instance) {
+                instance.destroy();
+              } 
+            }
+          }
+        });
+      });
+      observer.observe(document, { childList: true });
     }
     var f = options.publishProgress ? deferedForEach : Array.prototype.forEach;
     f.call(nodes, function (node, index) {
@@ -60,15 +76,25 @@ exports.init = function (func, options, root) {
           }
         });
       }
-      el = (node.tagName.toLowerCase() === 'script') ? root : node;
+      el = (node.tagName.toLowerCase() === 'script') ? options.root : node;
       component = exports.registry.findComponent(type);
       if (component) {
         component.attachTo(el, componentOptions);
+        if (!MutationObserver) {
+          el.addEventListener('DOMNodeRemoved', function (event) {
+            if (event.target === el) {
+              el.removeEventListener('DOMNodeRemoved', this);
+              component.destroy();
+            }
+          }, false);
+        }
       } else if (!options.ignoreNotFound) {
         throw new Error('component ' + type + ' not found');
       }
     });
-    pub(options.readyTopic, {});
+    if (!options.publishProgress) {
+      finishInit();
+    }
   });
 };
 
